@@ -1,0 +1,6 @@
+{
+  "name": "soundmanager",
+  "dependencies": [
+    "openal-soft"
+  ]
+}
