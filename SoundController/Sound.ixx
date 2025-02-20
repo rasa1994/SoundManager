@@ -15,6 +15,7 @@ export
 	{
 	public:
 		Sound(const std::string& soundPath);
+		~Sound();
 		void Play(bool isLooping = false, bool stop = false, bool reset = false) const;
 		void Stop() const;
 		const SoundInfo& GetSoundInfo() const noexcept { return m_info; }
@@ -22,6 +23,7 @@ export
 		static SoundPtr CreateSound(const std::string& soundPath);
 		[[no_discard]]const WAVHeader& GetHeader() const noexcept { return m_soundHeader.first; }
 		[[no_discard]]const SoundData& GetSoundData() const noexcept { return m_soundHeader.second; }
+		void ReleaseResource();
 	private:
 		std::unordered_map<int, bool> m_isPlaying;
 		std::string m_soundPath;
@@ -39,6 +41,12 @@ Sound::Sound(const std::string& soundPath) : m_soundPath(soundPath), m_info{}, m
 	m_soundHeader = std::move(CSoundController::Get().CreateNewSourceAndBuffer(soundPath, m_info));
 }
 
+
+
+Sound::~Sound()
+{
+	ReleaseResource();
+}
 
 
 void Sound::Play(bool isLooping, bool stop, bool reset) const
@@ -65,4 +73,16 @@ bool Sound::IsPlaying() const noexcept
 SoundPtr Sound::CreateSound(const std::string& soundPath)
 {
 	return std::make_shared<Sound>(soundPath);
+}
+
+
+
+void Sound::ReleaseResource()
+{
+	if (IsPlaying())
+	{
+		Stop();
+	}
+
+	CSoundController::Get().DeleteSource(m_info);
 }

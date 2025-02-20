@@ -16,5 +16,5 @@ int main()
 	sound2->Play();
 	sound3->Play();
 
-	std::this_thread::sleep_for(std::chrono::seconds(5));
+	std::this_thread::sleep_for(std::chrono::seconds(2));
 }
