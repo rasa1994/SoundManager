@@ -9,7 +9,8 @@ import <bitset>;
 export
 {
 	constexpr unsigned int MAX_BUFFERS_FOR_QUEUE = 256;
-
+	class Sound;
+	using SoundPtr = std::shared_ptr<Sound>;
 	class Sound
 	{
 	public:
@@ -18,14 +19,14 @@ export
 		void Stop() const;
 		const SoundInfo& GetSoundInfo() const noexcept { return m_info; }
 		bool IsPlaying() const noexcept;
-		const WAVHeader& GetSoundFile() const noexcept { return m_soundHeader; }
-		void PlaySource() const;
-
+		static SoundPtr CreateSound(const std::string& soundPath);
+		[[no_discard]]const WAVHeader& GetHeader() const noexcept { return m_soundHeader.first; }
+		[[no_discard]]const SoundData& GetSoundData() const noexcept { return m_soundHeader.second; }
 	private:
 		std::unordered_map<int, bool> m_isPlaying;
 		std::string m_soundPath;
 		SoundInfo m_info;
-		WAVHeader m_soundHeader;
+		HeaderAndData m_soundHeader;
 		std::deque<ALuint> m_buffersForQueue;
 		unsigned int bufferToPlay;
 	};
@@ -33,21 +34,26 @@ export
 
 
 
-
 Sound::Sound(const std::string& soundPath) : m_soundPath(soundPath), m_info{}, m_soundHeader{}
 {
-	CSoundController::Get().CreateNewSourceAndBuffer(soundPath, m_info);
+	m_soundHeader = std::move(CSoundController::Get().CreateNewSourceAndBuffer(soundPath, m_info));
 }
+
+
 
 void Sound::Play(bool isLooping, bool stop, bool reset) const
 {
 	CSoundController::Get().PlaySound(m_info, isLooping, stop, reset);
 }
 
+
+
 void Sound::Stop() const
 {
 	CSoundController::Get().StopSound(m_info);
 }
+
+
 
 bool Sound::IsPlaying() const noexcept
 {
@@ -55,7 +61,8 @@ bool Sound::IsPlaying() const noexcept
 }
 
 
-void Sound::PlaySource() const
+
+SoundPtr Sound::CreateSound(const std::string& soundPath)
 {
-	CSoundController::Get().PlaySource(m_info.source);
+	return std::make_shared<Sound>(soundPath);
 }

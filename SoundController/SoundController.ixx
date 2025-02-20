@@ -16,6 +16,7 @@ export
 	using uint = unsigned int;
 	using ulong = unsigned long;
 	using uchar = unsigned char;
+	using SoundData = std::vector<char>;
 
 	constexpr auto GetErrorMessage(const uint& error)
 	{
@@ -74,6 +75,8 @@ export
 	};
 #pragma pack()
 
+	using HeaderAndData = std::pair<WAVHeader, SoundData>;
+
 	bool LoadWAVFile(const std::string& filename, WAVHeader& header, std::vector<char>& data)
 	{
 		std::ifstream file(filename, std::ios::binary);
@@ -118,7 +121,7 @@ export
 
 		virtual ulong GetCurrentPosition(const SoundInfo& soundInfo) const = 0;
 
-		virtual WAVHeader CreateNewSourceAndBuffer(const std::string& filePath, SoundInfo& soundInfo) = 0;
+		virtual HeaderAndData CreateNewSourceAndBuffer(const std::string& filePath, SoundInfo& soundInfo) = 0;
 
 		virtual void CreateSourceForExistingBuffer(SoundInfo& soundInfo) = 0;
 
@@ -165,7 +168,7 @@ export
 
 		void CreateBuffer(ALuint& source, ALuint& buffer) override;
 
-		WAVHeader CreateNewSourceAndBuffer(const std::string& filePath, SoundInfo& soundInfo) override;
+		HeaderAndData CreateNewSourceAndBuffer(const std::string& filePath, SoundInfo& soundInfo) override;
 
 		void CreateSourceForExistingBuffer(SoundInfo& soundInfo) override;
 
@@ -543,7 +546,7 @@ void CSoundController::CreateBuffer(ALuint& source, ALuint& buffer)
 
 
 
-WAVHeader CSoundController::CreateNewSourceAndBuffer(const std::string& filePath, SoundInfo& soundInfo)
+HeaderAndData CSoundController::CreateNewSourceAndBuffer(const std::string& filePath, SoundInfo& soundInfo)
 {
 	if (!m_initialized)
 		return {};
@@ -556,7 +559,6 @@ WAVHeader CSoundController::CreateNewSourceAndBuffer(const std::string& filePath
 		return{};
 	}
 
-	std::vector<float> convertedData;
 	ALenum format{};
 	if (header.numChannels == 1 && header.bitsPerSample == 8)
 		format = AL_FORMAT_MONO8;
@@ -599,7 +601,7 @@ WAVHeader CSoundController::CreateNewSourceAndBuffer(const std::string& filePath
 	soundInfo.buffer = buffer;
 	soundInfo.source = source;
 	soundInfo.soundPath = filePath;
-	return header;
+	return { header, data };
 }
 
 
